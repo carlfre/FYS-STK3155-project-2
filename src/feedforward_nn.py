@@ -1,6 +1,6 @@
 import numpy as np
 
-class neural_network:
+class NeuralNetwork:
 
     def __init__(self, layers):
         """Initialize a neural network with the given layers and activation function.
