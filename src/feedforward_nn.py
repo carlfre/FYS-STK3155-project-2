@@ -2,7 +2,7 @@ import numpy as np
 
 class NeuralNetwork:
 
-    def __init__(self, layers):
+    def __init__(self, layers, activation_function="sigmoid"):
         """Initialize a neural network with the given layers and activation function.
         Parameters
         ----------
@@ -14,6 +14,18 @@ class NeuralNetwork:
         self.layers = layers
         self.weights = self._initialize_weights()
         self.biases = self._initialize_biases()
+
+        if activation_function == "sigmoid":
+            self.activation_fn = self._sigmoid
+            self.activation_fn_derivative = self._sigmoid_derivative
+        elif activation_function == "relu":
+            self.activation_fn = self._relu
+            self.activation_fn_derivative = self._relu_derivative
+        elif activation_function == "leaky_relu":
+            self.activation_fn = self._leaky_relu
+            self.activation_fn_derivative = self._leaky_relu_derivative
+        else:
+            raise ValueError("Activation function not recognized.")
 
         # TODO: implement rest of initialization
     
@@ -34,12 +46,18 @@ class NeuralNetwork:
     
     def _relu(self, z):
         return np.maximum(z, 0)
-    
-    def _relu_derivative(self, z):
-        return np.where(z > 0, 1, 0)
+
+    def _leaky_relu(self, z):
+        return np.where(z > 0, z, z * 0.01)
     
     def _sigmoid_derivative(self, z):
         return self._sigmoid(z) * (1 - self._sigmoid(z))
+    
+    def _relu_derivative(self, z):
+        return np.where(z > 0, 1, 0)
+
+    def _leaky_relu_derivative(self, z):
+        return np.where(z > 0, 1, 0.01)
 
     def forward_propagation(self):
         pass
@@ -47,4 +65,12 @@ class NeuralNetwork:
     def back_propagation(self):
         pass
 
+    def cost(self, X, w, y):
+        pass
+
+    def gradient(self, X, w, y):
+        pass
+
+    def predict(self, X, w):
+        pass
     
