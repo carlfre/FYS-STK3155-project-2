@@ -178,6 +178,8 @@ def stochastic_gradient_descent(
             cost[i] = model.cost(X, w, y)
             W[i] = w.flatten()
     
+    if compute_extra:
+        return w, cost, W
     else:
         return w
 
@@ -216,11 +218,71 @@ def gradient_descent_example():
     plt.legend()
     plt.show()
 
+def stochastic_gradient_descent_example():
+    import matplotlib.pyplot as plt
 
+    # Generate data
+    N = 100
+    X = np.random.randn(N, 2)
+    y = 2 * X[:, 0] + 3 * X[:, 1] + np.random.randn(N)
+
+    # Initialize weights
+    w = np.zeros(2)
+
+    # Run gradient descent
+    w, cost, W = stochastic_gradient_descent(X, y, w, OLSCost(), 200, 10, 0.01, compute_extra=True)
+    print("True weights: [2, 3]")
+    print(f"Final weights: {w}")
+    print(f"Final cost: {cost[-1]}")
+
+    # Plot cost function
+    plt.plot(cost)
+    plt.xlabel("Iteration")
+    plt.ylabel("Cost")
+    plt.show()
+
+    # Plot weight path
+    plt.plot(W[:, 0], label="w0")
+    plt.plot(W[:, 1], label="w1")
+    plt.xlabel("Iteration")
+    plt.ylabel("Weight")
+    plt.legend()
+    plt.show()
+
+def momentum_gradient_descent_example():
+    import matplotlib.pyplot as plt
+
+    # Generate data
+    N = 100
+    X = np.random.randn(N, 2)
+    y = 2 * X[:, 0] + 3 * X[:, 1] + np.random.randn(N)
+
+    # Initialize weights
+    w = np.zeros(2)
+
+    # Run gradient descent
+    w, cost, W = momentum_gradient_descent(X, y, w, OLSCost(), 200, 0.01, compute_extra=True)
+    print("True weights: [2, 3]")
+    print(f"Final weights: {w}")
+    print(f"Final cost: {cost[-1]}")
+
+    # Plot cost function
+    plt.plot(cost)
+    plt.xlabel("Iteration")
+    plt.ylabel("Cost")
+    plt.show()
+
+    # Plot weight path
+    plt.plot(W[:, 0], label="w0")
+    plt.plot(W[:, 1], label="w1")
+    plt.xlabel("Iteration")
+    plt.ylabel("Weight")
+    plt.legend()
+    plt.show()
 
 
 
 if __name__ == "__main__":
-    gradient_descent_example()
+    momentum_gradient_descent_example()
 
 # %%
