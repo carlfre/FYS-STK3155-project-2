@@ -32,10 +32,12 @@ def gradient_descent(
     
     Returns
     -------
-    beta: np.ndarray
-        Estimated beta
-    cost: np.ndarray
+    gamma: np.ndarray
+        Estimated gamma
+    cost: np.ndarray (if compute_extra=True)
         Cost function values after each iteration
+    W: np.ndarray (if compute_extra=True)
+        Weight path
     """
     if compute_extra:
         cost = np.zeros((n_iter + 1))
@@ -66,7 +68,7 @@ def momentum_gradient_descent(
     model, 
     n_iter, 
     learning_rate, 
-    beta=0.9,
+    gamma=0.9,
     compute_extra=False,
 ):
     """Gradient descent algorithm with momentum.
@@ -85,7 +87,7 @@ def momentum_gradient_descent(
         Number of iterations
     learning_rate: float
         Learning rate
-    beta: float
+    gamma: float
         Momentum parameter
     compute_extra: bool
         Whether to return cost function values and weight path
@@ -94,8 +96,10 @@ def momentum_gradient_descent(
     -------
     w: np.ndarray
         Estimated weights
-    cost: np.ndarray
+    cost: np.ndarray (if compute_extra=True)
         Cost function values after each iteration
+    W: np.ndarray (if compute_extra=True)
+        Weight path
     """
     if compute_extra:
         cost = np.zeros(n_iter + 1)
@@ -108,7 +112,7 @@ def momentum_gradient_descent(
         # Compute the gradient
         grad = model.gradient(X, w, y)
         # Update v
-        v = beta * v + learning_rate * grad
+        v = gamma * v + learning_rate * grad
         # Update w
         w = w - v
         # Compute the cost function if specified
@@ -155,10 +159,12 @@ def stochastic_gradient_descent(
 
     Returns
     -------
-    beta: np.ndarray
-        Estimated beta
-    cost: np.ndarray
+    gamma: np.ndarray
+        Estimated gamma
+    cost: np.ndarray (if compute_extra=True)
         Cost function values after each iteration
+    W: np.ndarray (if compute_extra=True)
+        Weight path
     """
     if compute_extra:
         cost = np.zeros((n_iter + 1))
@@ -191,7 +197,7 @@ def stochastic_gradient_descent_with_momentum(
     n_iter,
     batch_size,
     learning_rate,
-    beta=0.9,
+    gamma=0.9,
     compute_extra=False,
 ):
     """Stochastic gradient descent algorithm with momentum.
@@ -212,17 +218,19 @@ def stochastic_gradient_descent_with_momentum(
         Number of samples to use in each iteration
     learning_rate: float
         Learning rate
-    beta: float
+    gamma: float
         Momentum parameter
     compute_extra: bool
         Whether to return cost function values and weight path
 
     Returns
     -------
-    beta: np.ndarray
-        Estimated beta
-    cost: np.ndarray
+    w: np.ndarray
+        Estimated weights
+    cost: np.ndarray (if compute_extra=True)
         Cost function values after each iteration
+    W: np.ndarray (if compute_extra=True)   
+        Weight path
     """
     if compute_extra:
         cost = np.zeros((n_iter + 1))
@@ -237,7 +245,7 @@ def stochastic_gradient_descent_with_momentum(
         # Compute the gradient
         grad = model.gradient(X[indices], w, y[indices])
         # Update v
-        v = beta * v + learning_rate * grad
+        v = gamma * v + learning_rate * grad
         # Update w
         w = w - v
 
@@ -378,5 +386,3 @@ def stochastic_gradient_descent_with_momentum_example():
 
 if __name__ == "__main__":
     stochastic_gradient_descent_with_momentum_example()
-
-# %%
