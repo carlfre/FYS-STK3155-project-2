@@ -68,6 +68,29 @@ class ModelCost(ABC):
         """
         pass
 
+    def preprocess(self, w, y=None):
+        """Preprocess the weight and target vectors by convering
+        them to column vectors if they are not already.
+
+        Parameters
+        ----------
+        w: np.ndarray
+            Weight vector (column vector)
+        y: np.ndarray
+            Target vector (column vector)
+        
+        Returns
+        -------
+        w: np.ndarray
+            Preprocessed weight vector (column vector)
+        y: np.ndarray
+            Preprocessed target vector (column vector)
+        """
+        if y is not None:
+            return w.reshape(-1, 1), y.reshape(-1, 1)
+        else:
+            return w.reshape(-1, 1)
+
 class OLSCost(ModelCost):
     """Ordinary least squares cost function."""
 
@@ -76,13 +99,17 @@ class OLSCost(ModelCost):
 
     def cost(self, X, w, y):
         """Evaluate the cost function."""
+        w, y = self.preprocess(w, y)
         return np.mean((X @ w - y) ** 2)
 
     def gradient(self, X, w, y):
         """Evaluate the gradient of the cost function."""
+        w, y = self.preprocess(w, y)
         return 2 / len(y) * X.T @ (X @ w - y) 
 
     def predict(self, X, w):
+        """Predict target values from input data."""
+        w = self.preprocess(w)
         return X @ w
 
 class RidgeCost(ModelCost):
@@ -93,15 +120,46 @@ class RidgeCost(ModelCost):
 
     def cost(self, X, w, y):
         """Evaluate the cost function."""
+        w, y = self.preprocess(w, y)
         return np.mean((X @ w - y) ** 2) + self.regularization * np.mean(w ** 2)
 
     def gradient(self, X, w, y):
         """Evaluate the gradient of the cost function."""
+        w, y = self.preprocess(w, y)
         return 2 * X.T @ (X @ w - y) / len(y) + 2 * self.regularization * np.mean(w)
     
     def predict(self, X, w):
+        """Predict target values from input data."""
+        w = self.preprocess(w)
         return X @ w
 
+# TODO: check expressions for logistic cost, gradient, and predict
+class LogisticCost(ModelCost):
+    """Logistic regression cost function."""
+    
+    def __init__(self, regularization=0):
+        """Initialize, set L2 regularization parameter."""
+        self.regularization = regularization
+    
+    def cost(self, X, w, y):
+        """Evaluate the cost function."""
+        w, y = self.preprocess(w, y)
+        return np.mean(np.log(1 + np.exp(-y * (X @ w)))) + self.regularization * np.mean(w ** 2)
+    
+    def gradient(self, X, w, y):
+        """Evaluate the gradient of the cost function."""
+        w, y = self.preprocess(w, y)
+        return X.T @ (1 / (1 + np.exp(y * (X @ w))) - 1) / len(y) + 2 * self.regularization * np.mean(w)
+        
+    def predict(self, X, w):
+        """Compute the probability of a positive class."""
+        w = self.preprocess(w)
+        return 1 / (1 + np.exp(-X @ w))
+    
+    def predict_class(self, X, w):
+        """Predict target values from input data."""
+        w = self.preprocess(w)
+        return self.probability(X, w) > 0.5
 
 def cost_ols_example():
     """Example of how to use the cost function wrapper."""
@@ -163,7 +221,7 @@ def cost_ols_example():
     grad_1 = np.zeros(beta_1.shape)
     for i in range(beta_0.shape[0]):
         for j in range(beta_0.shape[1]):
-            beta = np.array([beta_0[i, j], beta_1[i, j]]).reshape(-1, 1)
+            beta = np.array([beta_0[i, j], beta_1[i, j]])
             grad = model.gradient(X, beta, y)
             grad_0[i, j] = grad[0]
             grad_1[i, j] = grad[1]
