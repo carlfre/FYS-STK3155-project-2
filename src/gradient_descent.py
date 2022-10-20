@@ -12,11 +12,26 @@ class GradientDescent:
         self,
         batch_size = None,
         momentum_param = 0,
-        adagrad = False,
-        adam = False,
-        rmsprop = False,
+        mode = "normal",
         store_extra=False
-    ):  
+    ):
+        """Initialize a gradient descent object.
+        
+        Parameters
+        ----------
+        batch_size : int, optional
+            Size of each batch, by default None (equivalent to batch_size = size of dataset)
+        momentum_param : float, optional
+            Momentum parameter, by default 0 (no momentum)
+        mode : str, optional
+            Mode of gradient descent, by default "normal".
+                "normal" : normal gradient descent
+                "adagrad" : Adagrad
+                "rmsprop" : RMSProp
+                "adam" : Adam
+        store_extra : bool, optional
+            Whether to store cost function and weight values for each epoch, by default False
+        """
         # Batch size of None corresponds to gradient descent
         self.batch_size = batch_size
 
@@ -24,16 +39,34 @@ class GradientDescent:
         self.momentum_param = momentum_param
         self.momentum = 0
 
-        self.use_adagrad = adagrad
-        self.use_adam = adam
-        self.use_rmsprop = rmsprop
+        if mode not in ["normal", "adagrad", "rmsprop", "adam"]:
+            raise ValueError("Mode must be one of 'normal', 'adagrad', 'rmsprop', 'adam'")
+        self.mode = mode
         self.store_extra = store_extra
-
-        # TODO: make adjustable
-        self.rms_param = 0.9
+        self.has_trained = False
 
 
     def train(self, X, w, y, model, learning_rate, n_epochs):
+        """Train a model using gradient descent.
+        
+        Parameters
+        ----------
+        X : np.array
+            Design matrix
+        w : np.array
+            Initial weight vector
+        y : np.array
+            Target vector
+        model : Model
+            Model to train
+        learning_rate : float
+            Learning rate
+        n_epochs : int
+            Number of epochs to train for
+        """
+        if self.has_trained:
+            raise Exception("This gradient descent object has already been used to train a model. Please create a new object.")
+        
         self.X = X
         self.w = w.reshape(-1, 1)
         self.y = y.reshape(-1, 1)
@@ -74,34 +107,45 @@ class GradientDescent:
     def delta_w(self, X, w, y, model, eta):
         return self.momentum * self.momentum_param - eta * model.gradient(X, w, y)
 
+    def delta_w_adam(self):
+        beta1 = 0.9
+        beta2 = 0.99
+        g = self.model.gradient(self.X_batch, self.w, self.y_batch)
+
+        if not hasattr(self, "m"):
+            self.m = np.zeros((len(self.w), 1))
+            self.s = np.zeros((len(self.w), 1))
+            self.t = 0
+
+        self.t += 1
+        
+        self.m = beta1 * self.m + (1 - beta1) * g
+        self.s = beta2 * self.s + (1 - beta2) * g**2
+
+        self.m = self.m / (1 - beta1**self.t)
+        self.s = self.s / (1 - beta2**self.t)
+
+        eps = 1e-8
+        pre_momentum = self.eta * self.m / (np.sqrt(self.s) + eps)
+
+        return self.momentum * self.momentum_param - pre_momentum
+
     def adagrad(self):
         if not hasattr(self, "G"):
             self.G = np.zeros(( len(self.w), 1))
-        #print(self.G.shape, (self.model.gradient(self.X_batch, self.w, self.y_batch)**2).shape)
-        #print((self.G + self.model.gradient(self.X_batch, self.w, self.y_batch)**2).shape)
         self.G += self.model.gradient(self.X_batch, self.w, self.y_batch)**2
         return self.eta / np.sqrt(self.G)
     
     def rmsprop(self):
-        if not hasattr(self, "v"):
-            self.v = np.zeros((len(self.w), 1))
-        self.v = self.rms_param * self.v + (1 - self.rms_param) * self.model.gradient(self.X_batch, self.w, self.y_batch)**2
-        return self.eta / np.sqrt(self.v)
+        beta = 0.9
 
-    #def sampler(self):
-    #    if not hasattr(self, "y") or not hasattr(self, "X"):
-    #        raise ValueError("X and y have not been set.")
-    #        
-    #    if self.batch_size == None:
-    #        return (self.X, self.y)
-    #
-    #    elif 0 < self.batch_size < 1:
-    #        n_samples = self.batch_size
-    #        idx = np.random.choice(len(self.y), n_samples, replace=False)
-    #        return (self.X[idx], self.y[idx])
-    #
-    #    else:
-    #        raise ValueError("Batch size must be in interval (0, 1]")
+        g = self.model.gradient(self.X_batch, self.w, self.y_batch)
+
+        if not hasattr(self, "s"):
+            self.s = np.zeros((len(self.w), 1))
+        self.s = beta * self.s + (1 - beta) * g**2
+        eps = 1e-8
+        return self.eta / np.sqrt(self.s + eps)
     
     def update(self):
         X = self.X_batch
@@ -110,401 +154,21 @@ class GradientDescent:
         model = self.model
         eta = self.eta
 
-        if self.use_adagrad:
+        if self.mode == "adagrad":
             eta_star = self.adagrad()
-        elif self.use_rmsprop:
+        elif self.mode == "rmsprop":
             eta_star = self.rmsprop()
         else:
             eta_star = eta
 
-        delta_w = self.delta_w(X, w, y, model, eta_star)
-        self.momentum = delta_w
-        return w + delta_w
-        # TODO: Handle adam
+        if self.mode == "adam":
+            delta_w = self.delta_w_adam()
+        else:
+            delta_w = self.delta_w(X, w, y, model, eta_star)
         
+        self.momentum = delta_w
+        return w + delta_w        
 
-
-
-def gradient_descent(
-    X, 
-    y, 
-    w, 
-    model, 
-    n_iter, 
-    eta,
-    compute_extra=True,
-):
-    """Gradient descent algorithm.
-
-    Parameters
-    ----------
-    X: np.ndarray
-        Design matrix
-    y: np.ndarray
-        Response vector
-    w: np.ndarray
-        Initial guess for weights
-    model: ModelCost
-        Cost function with gradient method
-    n_iter: int
-        Number of iterations
-    eta: float
-        Learning rate
-    compute_extra: bool
-        Whether to return cost function values and weight path
-    
-    Returns
-    -------
-    gamma: np.ndarray
-        Estimated gamma
-    cost: np.ndarray (if compute_extra=True)
-        Cost function values after each iteration
-    W: np.ndarray (if compute_extra=True)
-        Weight path
-    """
-    if compute_extra:
-        cost = np.zeros((n_iter + 1))
-        cost[0] = model.cost(X, w, y)
-        W = np.zeros((n_iter + 1, w.shape[0]))
-        W[0] = w.flatten()
-    
-    for i in range(1, n_iter + 1):
-        # Compute the gradient
-        grad = model.gradient(X, w, y)
-        # Update w
-        w = w - eta * grad
-        # Compute the cost function if specified
-        if compute_extra:
-            cost[i] = model.cost(X, w, y)
-            W[i] = w.flatten()
-
-    if compute_extra:
-        return w, cost, W
-    else:
-        return w
-
-
-def momentum_gradient_descent(
-    X, 
-    y, 
-    w, 
-    model, 
-    n_iter, 
-    eta, 
-    gamma=0.9,
-    compute_extra=False,
-):
-    """Gradient descent algorithm with momentum.
-
-    Parameters
-    ----------
-    X: np.ndarray
-        Design matrix
-    y: np.ndarray
-        Response vector
-    w: np.ndarray
-        Initial guess for weights
-    model: ModelCost
-        Cost function with gradient method
-    n_iter: int
-        Number of iterations
-    eta: float
-        Learning rate
-    gamma: float
-        Momentum parameter
-    compute_extra: bool
-        Whether to return cost function values and weight path
-    
-    Returns
-    -------
-    w: np.ndarray
-        Estimated weights
-    cost: np.ndarray (if compute_extra=True)
-        Cost function values after each iteration
-    W: np.ndarray (if compute_extra=True)
-        Weight path
-    """
-    if compute_extra:
-        cost = np.zeros(n_iter + 1)
-        cost[0] = model.cost(X, w, y)
-        W = np.zeros((n_iter + 1, w.shape[0]))
-        W[0] = w.flatten()
-    
-    v = np.zeros_like(w)
-    for i in range(1, n_iter + 1):
-        # Compute the gradient
-        grad = model.gradient(X, w, y)
-        # Update v
-        v = gamma * v + eta * grad
-        # Update w
-        w = w - v
-        # Compute the cost function if specified
-        if compute_extra:
-            cost[i] = model.cost(X, w, y)
-            W[i] = w.flatten()
-
-    if compute_extra:
-        return w, cost, W
-    else:
-        return w
-
-
-def stochastic_gradient_descent(
-    X, 
-    y, 
-    w, 
-    model, 
-    n_iter, 
-    batch_size, 
-    eta, 
-    compute_extra=False,
-):
-    """Stochastic gradient descent algorithm.
-
-    Parameters
-    ----------
-    X: np.ndarray
-        Design matrix
-    y: np.ndarray
-        Response vector
-    w: np.ndarray
-        Initial guess for weights
-    model: ModelCost
-        Cost function with gradient method
-    n_iter: int
-        Number of iterations
-    batch_size: int
-        Number of samples to use in each iteration
-    eta: float
-        Learning rate
-    compute_extra: bool
-        Whether to return cost function values and weight path
-
-    Returns
-    -------
-    gamma: np.ndarray
-        Estimated gamma
-    cost: np.ndarray (if compute_extra=True)
-        Cost function values after each iteration
-    W: np.ndarray (if compute_extra=True)
-        Weight path
-    """
-    if compute_extra:
-        cost = np.zeros((n_iter + 1))
-        cost[0] = model.cost(X, w, y)
-        W = np.zeros((n_iter + 1, w.shape[0]))
-        W[0] = w.flatten()
-    
-    for i in range(1, n_iter + 1):
-        # Randomly sample batch_size indices from [0, N-1]
-        indices = np.random.choice(X.shape[0], batch_size, replace=False)
-        # Compute the gradient
-        grad = model.gradient(X[indices], w, y[indices])
-        # Update w
-        w = w - eta * grad
-
-        if compute_extra:
-            cost[i] = model.cost(X, w, y)
-            W[i] = w.flatten()
-    
-    if compute_extra:
-        return w, cost, W
-    else:
-        return w
-
-def stochastic_gradient_descent_with_momentum(
-    X,
-    y,
-    w,
-    model,
-    n_iter,
-    batch_size,
-    eta,
-    gamma=0.9,
-    compute_extra=False,
-):
-    """Stochastic gradient descent algorithm with momentum.
-
-    Parameters
-    ----------
-    X: np.ndarray
-        Design matrix
-    y: np.ndarray
-        Response vector
-    w: np.ndarray
-        Initial guess for weights
-    model: ModelCost
-        Cost function with gradient method
-    n_iter: int
-        Number of iterations
-    batch_size: int
-        Number of samples to use in each iteration
-    eta: float
-        Learning rate
-    gamma: float
-        Momentum parameter
-    compute_extra: bool
-        Whether to return cost function values and weight path
-
-    Returns
-    -------
-    w: np.ndarray
-        Estimated weights
-    cost: np.ndarray (if compute_extra=True)
-        Cost function values after each iteration
-    W: np.ndarray (if compute_extra=True)   
-        Weight path
-    """
-    if compute_extra:
-        cost = np.zeros((n_iter + 1))
-        cost[0] = model.cost(X, w, y)
-        W = np.zeros((n_iter + 1, w.shape[0]))
-        W[0] = w.flatten()
-    
-    v = np.zeros_like(w)
-    for i in range(1, n_iter + 1):
-        # Randomly sample batch_size indices from [0, N-1]
-        indices = np.random.choice(X.shape[0], batch_size, replace=False)
-        # Compute the gradient
-        grad = model.gradient(X[indices], w, y[indices])
-        # Update v
-        v = gamma * v + eta * grad
-        # Update w
-        w = w - v
-
-        if compute_extra:
-            cost[i] = model.cost(X, w, y)
-            W[i] = w.flatten()
-    
-    if compute_extra:
-        return w, cost, W
-    else:
-        return w
-
-
-def gradient_descent_example():
-    import matplotlib.pyplot as plt
-
-    # Generate data
-    N = 100
-    X = np.random.randn(N, 2)
-    y = 2 * X[:, 0] + 3 * X[:, 1] + np.random.randn(N)
-
-    # Initialize weights
-    w = np.zeros(2)
-
-    # Run gradient descent
-    w, cost, W = gradient_descent(X, y, w, OLSCost(), 200, 0.01, compute_extra=True)
-    print("True weights: [2, 3]")
-    print(f"Final weights: {w}")
-    print(f"Final cost: {cost[-1]}")
-
-    # Plot cost function
-    plt.plot(cost)
-    plt.xlabel("Iteration")
-    plt.ylabel("Cost")
-    plt.show()
-
-    # Plot weight path
-    plt.plot(W[:, 0], label="w0")
-    plt.plot(W[:, 1], label="w1")
-    plt.xlabel("Iteration")
-    plt.ylabel("Weight")
-    plt.legend()
-    plt.show()
-
-def stochastic_gradient_descent_example():
-    import matplotlib.pyplot as plt
-
-    # Generate data
-    N = 100
-    X = np.random.randn(N, 2)
-    y = 2 * X[:, 0] + 3 * X[:, 1] + np.random.randn(N)
-
-    # Initialize weights
-    w = np.zeros(2)
-
-    # Run gradient descent
-    w, cost, W = stochastic_gradient_descent(X, y, w, OLSCost(), 200, 10, 0.01, compute_extra=True)
-    print("True weights: [2, 3]")
-    print(f"Final weights: {w}")
-    print(f"Final cost: {cost[-1]}")
-
-    # Plot cost function
-    plt.plot(cost)
-    plt.xlabel("Iteration")
-    plt.ylabel("Cost")
-    plt.show()
-
-    # Plot weight path
-    plt.plot(W[:, 0], label="w0")
-    plt.plot(W[:, 1], label="w1")
-    plt.xlabel("Iteration")
-    plt.ylabel("Weight")
-    plt.legend()
-    plt.show()
-
-def momentum_gradient_descent_example():
-    import matplotlib.pyplot as plt
-
-    # Generate data
-    N = 100
-    X = np.random.randn(N, 2)
-    y = 2 * X[:, 0] + 3 * X[:, 1] + np.random.randn(N)
-
-    # Initialize weights
-    w = np.zeros(2)
-
-    # Run gradient descent
-    w, cost, W = momentum_gradient_descent(X, y, w, OLSCost(), 200, 0.01, compute_extra=True)
-    print("True weights: [2, 3]")
-    print(f"Final weights: {w}")
-    print(f"Final cost: {cost[-1]}")
-
-    # Plot cost function
-    plt.plot(cost)
-    plt.xlabel("Iteration")
-    plt.ylabel("Cost")
-    plt.show()
-
-    # Plot weight path
-    plt.plot(W[:, 0], label="w0")
-    plt.plot(W[:, 1], label="w1")
-    plt.xlabel("Iteration")
-    plt.ylabel("Weight")
-    plt.legend()
-    plt.show()
-
-def stochastic_gradient_descent_with_momentum_example():
-    import matplotlib.pyplot as plt
-
-    # Generate data
-    N = 100
-    X = np.random.randn(N, 2)
-    y = 2 * X[:, 0] + 3 * X[:, 1] + np.random.randn(N)
-
-    # Initialize weights
-    w = np.zeros(2)
-
-    # Run gradient descent
-    w, cost, W = stochastic_gradient_descent_with_momentum(X, y, w, OLSCost(), 200, 10, 0.01, compute_extra=True)
-    print("True weights: [2, 3]")
-    print(f"Final weights: {w}")
-    print(f"Final cost: {cost[-1]}")
-
-    # Plot cost function
-    plt.plot(cost)
-    plt.xlabel("Iteration")
-    plt.ylabel("Cost")
-    plt.show()
-
-    # Plot weight path
-    plt.plot(W[:, 0], label="w0")
-    plt.plot(W[:, 1], label="w1")
-    plt.xlabel("Iteration")
-    plt.ylabel("Weight")
-    plt.legend()
-    plt.show()
 
 def gradient_descent_class_example():
     import matplotlib.pyplot as plt
@@ -517,8 +181,8 @@ def gradient_descent_class_example():
     # Initialize weights
     w = np.zeros((2)).reshape(-1, 1)
 
-    gd = GradientDescent(momentum_param=0.5, batch_size=20, store_extra=True, rmsprop=True)
-    w = gd.train(X, w, y, OLSCost(), 0.5, 5)
+    gd = GradientDescent(momentum_param=0.0, batch_size=20, mode="normal", store_extra=True)
+    w = gd.train(X, w, y, OLSCost(), 0.1, 1000)
     print("True weights: [2, 3]")
     print(f"Final weights: {w}")
     print(f"Final cost: {gd.costs[-1]}")
@@ -538,9 +202,6 @@ def gradient_descent_class_example():
     plt.plot(gd.weights[:, 1], label="w1")
     plt.legend()
     plt.show()
-
-
-
 
 if __name__ == "__main__":
     gradient_descent_class_example()
