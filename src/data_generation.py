@@ -42,3 +42,24 @@ def generate_data_Franke(N, sigma2, seed):
     z = true_z + epsilon
 
     return x, y, z, true_z
+
+def linear_function(x, y):
+    a1 = 1
+    a2 = 2
+    b = -1
+    return a1 * x + a2 * y + b
+
+def generate_data_linear(N, sigma2, seed):
+    """Generates N uniformly distributed points on [0,1] x [0,1]
+    applies a linear function to the points and adds noise
+    """
+    np.random.seed(seed)
+
+    x = np.random.uniform(0, 1, N)
+    y = np.random.uniform(0, 1, N)
+
+    true_z = linear_function(x, y)
+    epsilon = np.random.normal(0, sigma2, (N)) # generates n samples epsilon ~ N(0, sigma2)
+    z = true_z + epsilon
+
+    return x, y, z, true_z
