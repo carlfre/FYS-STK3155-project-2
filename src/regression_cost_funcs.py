@@ -144,11 +144,19 @@ class LogisticCost(ModelCost):
     def cost(self, X, w, y):
         """Evaluate the cost function."""
         w, y = self.preprocess(w, y)
+        
         return np.mean(np.log(1 + np.exp(-y * (X @ w)))) + self.regularization * np.mean(w ** 2)
     
     def gradient(self, X, w, y):
         """Evaluate the gradient of the cost function."""
+        """
         w, y = self.preprocess(w, y)
+        target = X@w
+        a = -np.sum(y - np.exp(target)/(1+np.exp(target)))
+        b = -np.sum(y*X - X*np.exp(target)/(1+np.exp(target)))
+        return np.array([a, b]).reshape(-1, 1)
+        """
+
         return X.T @ (1 / (1 + np.exp(y * (X @ w))) - 1) / len(y) + 2 * self.regularization * np.mean(w)
         
     def predict(self, X, w):
