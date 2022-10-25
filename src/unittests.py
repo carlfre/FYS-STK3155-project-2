@@ -67,23 +67,26 @@ from sklearn.linear_model import LogisticRegression
 
 @pytest.mark.parametrize("batch_size", [None, 10])
 @pytest.mark.parametrize("momentum_param", [0, 0.9])
-@pytest.mark.parametrize("store_extra", [True, False])
-@pytest.mark.parametrize("mode", ["normal"])
+@pytest.mark.parametrize("store_extra", [False, True])
+@pytest.mark.parametrize("mode", ["normal", "adagrad", "rmsprop", "adam"])
 def test_gradient_descent_logistic(batch_size, mode, momentum_param, store_extra):
     """Test gradient descent using different modes."""
     # Create data
     N = 100
     X = np.random.randn(N, 2)
-    y = 2 * X[:, 0] + 3 * X[:, 1]
-    y = (y > 0).astype(int)
+    y = 405 * X[:, 0] + 32 * X[:, 1]
 
     # Initialize weights
     w = np.zeros((2)).reshape(-1, 1)
-
     descent = gd.GradientDescent(momentum_param=momentum_param, batch_size=batch_size, mode=mode, store_extra=store_extra)
     w = descent.train(X, w, y, rcf.LogisticCost(), 0.01, 1000)
-    clf = LogisticRegression().fit(X, y)
-    assert(w.flatten() == pytest.approx(clf.coef_.flatten(), 0.5))
+
+    logmod = rcf.LogisticCost()
+
+    y = (y > 0).astype(int)
+    y_pred = logmod.predict_class(X, w)
+
+    assert((np.mean(y == y_pred)) == pytest.approx(1, 0.25))
 
 
 

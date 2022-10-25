@@ -1,31 +1,29 @@
+from sklearn.preprocessing import StandardScaler
 import gradient_descent as gd
 import regression_cost_funcs as rcf
+import regression_tools as rt
 import numpy as np
-
-# Create data
-
-
-
-np.random.seed(0)
-
-N = 50
-X = np.random.randn(N, 2)
-y = 30 * X[:, 0] + 420 * X[:, 1]
-w = np.zeros((2)).reshape(-1, 1)
-
-descent = gd.GradientDescent(mode="adam", store_extra=True)
-w = descent.train(X, w, y, rcf.OLSCost(), 0.1, 10_000)
-w_evo = descent.weights
-
-# Plot the evolution of the weights
-
 import matplotlib.pyplot as plt
 
-fig, ax = plt.subplots(1, 2, figsize=(10, 5))
-ax[0].plot(w_evo[:, 0], "--o", label="w0")
-ax[1].plot(w_evo[:, 1], "--o", label="w1")
-ax[0].legend()
-ax[0].set_title("Weight evolution")
-plt.show()
+ # Create data
+N = 100
+X = np.random.randn(N, 2)
+y = 2 * X[:, 0] + 3 * X[:, 1]
 
 
+
+# Initialize weights
+w = np.zeros((2)).reshape(-1, 1)
+
+descent = gd.GradientDescent(momentum_param=0, batch_size=None, mode="normal", store_extra=False)
+w = descent.train(X, w, y, rcf.LogisticCost(), 0.01, 1000)
+logmod = rcf.LogisticCost()
+
+y_pred = logmod.predict(X, w)
+print(f"Weights: {w}")
+print(f"Accuracy: {rt.MSE(y, y_pred)}")
+
+y = (y > 0).astype(int)
+y_pred = logmod.predict_class(X, w)
+
+print(f"Accuracy_class: {np.mean(y == y_pred)}")
