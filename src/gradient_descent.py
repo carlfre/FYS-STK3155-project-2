@@ -93,7 +93,7 @@ class GradientDescent:
                 self.X = self.X[idx]
                 self.y = self.y[idx]
             # For each batchm, update weights
-            for batch in range(math.ceil(len(y) / self.batch_size)):
+            for batch in range(math.ceil(len(y) / batch_size)):
                 self.X_batch = self.X[batch * batch_size: (batch + 1) * batch_size]
                 self.y_batch = self.y[batch * batch_size: (batch + 1) * batch_size]
                 self.w = self.update()
@@ -109,7 +109,7 @@ class GradientDescent:
 
     def delta_w_adam(self):
         beta1 = 0.9
-        beta2 = 0.99
+        beta2 = 0.999
         g = self.model.gradient(self.X_batch, self.w, self.y_batch)
 
         if not hasattr(self, "m"):
@@ -120,13 +120,14 @@ class GradientDescent:
         self.t += 1
         
         self.m = beta1 * self.m + (1 - beta1) * g
-        self.s = beta2 * self.s + (1 - beta2) * g**2
+        self.s = beta2 * self.s + (1 - beta2) * (g**2)
 
-        self.m = self.m / (1 - beta1**self.t)
-        self.s = self.s / (1 - beta2**self.t)
+
+        m_hat = self.m / (1 - beta1**self.t)
+        s_hat = self.s / (1 - beta2**self.t)
 
         eps = 1e-8
-        pre_momentum = self.eta * self.m / (np.sqrt(self.s) + eps)
+        pre_momentum = self.eta * m_hat / (np.sqrt(s_hat) + eps)
 
         return self.momentum * self.momentum_param - pre_momentum
 

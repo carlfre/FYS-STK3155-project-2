@@ -148,8 +148,16 @@ class LogisticCost(ModelCost):
     
     def gradient(self, X, w, y):
         """Evaluate the gradient of the cost function."""
-        w, y = self.preprocess(w, y)
-        return X.T @ (1 / (1 + np.exp(y * (X @ w))) - 1) / len(y) + 2 * self.regularization * np.mean(w)
+        """
+        Alternative implementation; this is the one used in the lecture notes.
+        dcdb0 = np.zeros(1)
+        dcdb1 = np.zeros(1)
+        for i in range(len(y)):
+            dcdb0[0] += (y[i] - np.exp(X[i]@w)/(1+np.exp(X[i]@w)))[0]
+            dcdb1[0] += (y[i]*X[i] - X[i]*np.exp(X[i]@w)/(1+np.exp(X[i]@w)))[0]
+        return np.array([dcdb0, dcdb1])
+        """
+        return X.T @  ((X @ w) - y) + 2 * self.regularization * np.mean(w)
         
     def predict(self, X, w):
         """Compute the probability of a positive class."""
@@ -159,7 +167,7 @@ class LogisticCost(ModelCost):
     def predict_class(self, X, w):
         """Predict target values from input data."""
         w = self.preprocess(w)
-        return self.probability(X, w) > 0.5
+        return (1 / (1 + np.exp(-X @ w)) > 0.5).astype(int).flatten()
 
 def cost_ols_example():
     """Example of how to use the cost function wrapper."""
