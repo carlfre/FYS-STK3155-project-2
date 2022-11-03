@@ -19,6 +19,11 @@ def MSE(y_data, y_model):
     n = np.size(y_model)
     return np.sum((y_data - y_model) ** 2) / n
 
+def MSE_vec(y_data, y_model):
+    """Computes mean squared error for vectorized inputs."""
+    n = np.size(y_model[0])
+    return np.sum((y_data - y_model) ** 2, axis=1) / n
+
 
 def create_X_polynomial(x, y, n):
     """Computes the design matrix for a degree n polynomial in variables
