@@ -85,7 +85,7 @@ class GradientDescent:
             # Store cost and weight values before training
             self.costs[0] = model.cost(X, self.w, self.y)
             self.weights[0] = w.flatten()
-        
+            
         for epoch in range(1, n_epochs + 1):
             # Shuffle data
             if self.batch_size:
@@ -99,8 +99,8 @@ class GradientDescent:
                 self.w = self.update()
             # Store cost and weight values after each epoch
             if self.store_extra:
-                    self.costs[epoch] = model.cost(X, self.w, y)
-                    self.weights[epoch] = self.w.flatten()
+                self.costs[epoch] = model.cost(X, self.w, y)
+                self.weights[epoch] = self.w.flatten()
         
         return self.w
 

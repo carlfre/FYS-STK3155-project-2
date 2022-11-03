@@ -63,3 +63,28 @@ def generate_data_linear(N, sigma2, seed):
     z = true_z + epsilon
 
     return x, y, z, true_z
+
+def generate_data_binary(N, seed):
+    """Generates N variable z with values 0 or 1,
+    that is 1 if x > 0.5 and y > 0.5, else 0.
+
+    Parameters
+    ----------
+    N: int
+        Number of points
+    seed: int
+        seed
+    """
+    np.random.seed(seed)
+
+    x = np.random.uniform(0, 1, N)
+    y = np.random.uniform(0, 1, N)
+
+    z = np.zeros(N)
+    for i in range(N):
+        if x[i] > 0.5 and y[i] > 0.5:
+            z[i] = 1
+        else:
+            z[i] = 0
+
+    return x, y, z
