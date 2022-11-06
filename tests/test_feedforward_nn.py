@@ -116,7 +116,10 @@ def test_gradient_3_layers():
         wb_minus = wb - one_i * eps
 
         partial_i = (nn.cost(X, wb_plus, y) - nn.cost(X, wb_minus, y)) / (2 * eps)
-        assert abs(partial_i - grad[i][0]) < tol
+
+        # Verify that relative error is lower than tolerance
+        denom = partial_i if partial_i != 0 else 1
+        assert abs((partial_i - grad[i][0]) / denom) < tol
 
 
 def test_gradient_4_layers():
@@ -148,8 +151,8 @@ def test_gradient_4_layers():
         wb_minus = wb - one_i * eps
 
         partial_i = (nn.cost(X, wb_plus, y) - nn.cost(X, wb_minus, y)) / (2 * eps)
-        assert abs(partial_i - grad[i][0]) < tol
+
+        # Verify that relative error is lower than tolerance
+        denom = partial_i if partial_i != 0 else 1
+        assert abs((partial_i - grad[i][0]) / denom) < tol
     
-
-
-
