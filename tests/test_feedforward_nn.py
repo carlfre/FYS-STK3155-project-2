@@ -2,10 +2,6 @@ from feedforward_nn import NeuralNetwork
 
 import numpy as np
 
-#print working directory
-
-import os
-print(os.getcwd())
 
 def test_initialization():
     nn = NeuralNetwork([3, 2, 6, 8, 1], "relu")
@@ -18,7 +14,6 @@ def test_initialization():
     assert nn.weights[3].shape == (8, 1)
 
     assert nn.biases[0].shape == (1, 2)
-    print(nn.biases[0])
     assert nn.biases[1].shape == (1, 6)
     assert nn.biases[2].shape == (1, 8)
     assert nn.biases[3].shape == (1, 1)
@@ -36,8 +31,6 @@ def test_unflatten_weights():
     nn = NeuralNetwork([2, 2, 2, 1], "relu")
     wb = np.array([[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5]]).T
     weights, biases = nn.unflatten_weights_and_biases(wb)
-    print(weights)
-    print(biases)
     assert np.array_equal(weights[0], np.array([[1, 2], [3, 4]]))
     assert np.array_equal(weights[1], np.array([[5, 6], [7, 8]]))
     assert np.array_equal(weights[2], np.array([[9, 10]]).T)
@@ -69,7 +62,7 @@ def test_forward_propagation():
 
     activations, zs = nn._forward_propagation()
 
-    atol = 1e-4
+    atol = 1e-5
     # Compare with hand-caluclated values
     assert np.allclose(zs[0], X, atol=atol)
     assert np.allclose(activations[0], X, atol=atol)
@@ -80,18 +73,83 @@ def test_forward_propagation():
     assert np.allclose(zs[3], np.array([[1.995645743783]]), atol=atol)
     assert np.allclose(activations[3], np.array([[0.880339150445242]]), atol=atol)
 
+def test_predict():
+    X = np.array([[1, 2]])
+    nn = NeuralNetwork([2, 2, 2, 1], "sigmoid")
+
+    nn.weights = [np.array([[1, 2], [3, 4]]) * 0.1, np.array([[5, 6], [7, 8]]) * 0.1, np.array([[9, 10]]).T * 0.1]
+    nn.biases = [np.array([[1, 2]])* 0.1, np.array([[3, 4]]) * 0.1, np.array([[5]]) * 0.1]
+    wb = nn.wb()
+    
+
+    y_pred = nn.predict(X, wb)
+    assert y_pred.shape == (1, 1)
+    assert np.allclose(y_pred, np.array([[0.88033915]]), atol=1e-5)
+
+    X = np.array([[1, 2], [3, 4]])
+    y_pred = nn.predict(X, wb)
+    assert y_pred.shape == (2, 1)
+
+    X = np.array([8, 3, 2, 1, 4, 5, 6, 7]).reshape(4, 2)
+    y_pred = nn.predict(X, wb)
+    assert y_pred.shape == (4, 1)
+
+def test_gradient_3_layers():
+    """Numericallly estimates the gradient, and compares it to the gradient calculated by backpropagation
+    """
+    layers = [2, 2, 1]
+    nn = NeuralNetwork(layers, "relu")
+    wb = nn.wb()
+
+    n = len(wb) # 6 in this case
+
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([[1], [0]])
+
+    tol = 1e-4
+    eps = 1e-4
+    grad = nn.gradient(X, wb, y)
+    for i in range(n):
+        one_i = np.zeros((n, 1))
+        one_i[i] = 1
+        wb_plus = wb + one_i * eps
+        wb_minus = wb - one_i * eps
+
+        partial_i = (nn.cost(X, wb_plus, y) - nn.cost(X, wb_minus, y)) / (2 * eps)
+        assert abs(partial_i - grad[i][0]) < tol
 
 
-#def test_gradient_2_layers():
-#    """Computes analytical gradient for a 3-layer network and compares it to
-#    numerical gradient.
-#    """
-#    layers = [2, 2]
-#    nn = NeuralNetwork(layers, "relu")
-#    W = nn.weights
-#    b = nn.biases
-#    wb = nn.wb()
-#
-#    X = np.array([[1, 2], [3, 4]])
-#    y = np.array([[1], [0]])
+def test_gradient_4_layers():
+    """Numericallly estimates the gradient, and compares it to the gradient calculated by backpropagation
+    """
+    layers = [3, 4, 3, 1]
+    nn = NeuralNetwork(layers, "relu")
+    wb = nn.wb()
+
+    n = len(wb) # 6 in this case
+
+    X = np.array([
+        [1, 2, 3], 
+        [3, 4, 5], 
+        [10, 10, 10]
+        ])
+    y = np.array([
+        [1], 
+        [0],
+        [0]])
+
+    tol = 1e-4
+    eps = 1e-4
+    grad = nn.gradient(X, wb, y)
+    for i in range(n):
+        one_i = np.zeros((n, 1))
+        one_i[i] = 1
+        wb_plus = wb + one_i * eps
+        wb_minus = wb - one_i * eps
+
+        partial_i = (nn.cost(X, wb_plus, y) - nn.cost(X, wb_minus, y)) / (2 * eps)
+        assert abs(partial_i - grad[i][0]) < tol
+    
+
+
 
