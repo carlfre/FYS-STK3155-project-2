@@ -97,10 +97,11 @@ def test_predict():
 def test_gradient_3_layers():
     """Numericallly estimates the gradient, and compares it to the gradient calculated by backpropagation
     """
-    layers = [2, 2, 1]
-    nn = NeuralNetwork(layers, "relu")
-    wb = nn.wb()
+    np.random.seed(90) # Set numpy rng seed
 
+    layers = [2, 2, 1]
+    nn = NeuralNetwork(layers, "sigmoid")
+    wb = nn.wb()
     n = len(wb) # 6 in this case
 
     X = np.array([[1, 2], [3, 4]])
@@ -125,11 +126,12 @@ def test_gradient_3_layers():
 def test_gradient_4_layers():
     """Numericallly estimates the gradient, and compares it to the gradient calculated by backpropagation
     """
-    layers = [3, 4, 3, 1]
-    nn = NeuralNetwork(layers, "relu")
-    wb = nn.wb()
+    np.random.seed(673) # Set numpy rng seed
 
-    n = len(wb) # 6 in this case
+    layers = [3, 4, 3, 1]
+    nn = NeuralNetwork(layers, "sigmoid")
+    wb = nn.wb()
+    n = len(wb)
 
     X = np.array([
         [1, 2, 3], 
@@ -139,7 +141,8 @@ def test_gradient_4_layers():
     y = np.array([
         [1], 
         [0],
-        [0]])
+        [0]
+        ])
 
     tol = 1e-4
     eps = 1e-4
@@ -154,5 +157,4 @@ def test_gradient_4_layers():
 
         # Verify that relative error is lower than tolerance
         denom = partial_i if partial_i != 0 else 1
-        assert abs((partial_i - grad[i][0]) / denom) < tol
-    
+        assert abs((partial_i - grad[i][0]) / denom) < tol 

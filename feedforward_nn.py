@@ -9,6 +9,9 @@ class NeuralNetwork:
         ----------
         layers: list
             List of integers, where each integer represents the number of nodes in a layer.
+        
+        activation_function: str
+            Activation function to use for all layers except the input and final layers.
     
         """
 
@@ -200,22 +203,26 @@ class NeuralNetwork:
 
         activations, _ = self._forward_propagation()
         return activations[-1]
+
     def predict_binary(self, X, wb):
         return self.predict(X, wb) > 0.5
-    
-def nn_example():
-    
 
+
+
+
+
+    
+def nn_example_old():
     from data_generation import generate_data_linear
 
-    x, y, z, _ = generate_data_linear(3, 0, 22)
-    X = np.vstack([x, y]).T
+    #x, y, z, _ = generate_data_linear(3, 0, 22)
+    #X = np.vstack([x, y]).T
 
-    nn = NeuralNetwork([2, 2, 2, 1], "relu")
+    nn = NeuralNetwork([2, 4, 4, 4, 1], "sigmoid")
 
     from data_generation import generate_data_binary
-    x, y, z = generate_data_binary(100, 75767)
-    X = np.vstack([x, y]).T
+    X, z = generate_data_binary(1000, 75767)
+    
 
     from gradient_descent import GradientDescent
     wb = nn.wb()
@@ -232,7 +239,7 @@ def nn_example():
 
     #print(nn.predict(X, wb))
     gd = GradientDescent(batch_size=5, store_extra=True)
-    wb = gd.train(X, wb, y, nn, 0.01, 1000)
+    wb = gd.train(X, wb, z, nn, 0.1, 1000)
 
     # Plot the cost function
     import matplotlib.pyplot as plt
@@ -251,28 +258,67 @@ def nn_example():
     print(np.count_nonzero(preds))
 
     # Test prediction
-    X = np.array([[0, 1],
-                [1, 0],
-                [1, 1],
-                [0, 0]])
+    X = np.array([[0.2, 0.8],
+                [0.8, 0.2],
+                [0.8, 0.8],
+                [0.2, 0.2]])
 
     print(nn.predict(X, wb))
-
-
-
-
 
     #plot x, y, z
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
+    x = X[:, 0]
+    y = X[:, 1]
     ax.scatter(x, y, z)
     plt.show()
 
+def nn_example():
+
+    from data_generation import generate_data_binary
+    X, z = generate_data_binary(500, 787)
+    
+    nn = NeuralNetwork([2, 4, 4, 4, 1], "relu")
+
+    from gradient_descent import GradientDescent
+    wb = nn.wb()
+
+    preds = nn.predict_binary(X, wb)
+
+    cnt = 0
+
+    for i in range(len(preds)):
+        if preds[i] == z[i]:
+            cnt += 1
+    
+    print(cnt / len(preds))
 
 
+    gd = GradientDescent(batch_size=5, store_extra=True)
+    wb = gd.train(X, wb, z, nn, 0.1, 100)
 
+    ## Plot the cost function
+    import matplotlib.pyplot as plt
+    plt.plot(gd.costs)
+    plt.show()
+
+
+    # 3d plot of prediction
+
+    X, Y = np.meshgrid(np.linspace(0, 1, 100), np.linspace(0, 1, 100))
+    X = X.reshape(-1, 1)
+    Y = Y.reshape(-1, 1)
+
+    Z = np.hstack([X, Y])
+
+    preds = nn.predict(Z, wb)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(X, Y, preds)
+    plt.show()
 
 def main():
     nn_example()

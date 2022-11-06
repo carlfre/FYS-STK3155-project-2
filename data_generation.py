@@ -64,7 +64,7 @@ def generate_data_linear(N, sigma2, seed):
 
     return x, y, z, true_z
 
-def generate_data_binary(N, seed):
+def generate_data_binary(N, seed=987):
     """Generates N variable z with values 0 or 1,
     that is 1 if x > 0.5 and y > 0.5, else 0.
 
@@ -87,4 +87,16 @@ def generate_data_binary(N, seed):
         else:
             z[i] = 0
 
-    return x, y, z
+    X = np.vstack([x, y]).T
+    z = z.reshape(-1, 1)
+
+    return X, z
+
+def and_data(n):
+    """Generates n points of the AND function"""
+    x = np.random.randint(0, 2, n)
+    y = np.random.randint(0, 2, n)
+    z = x & y
+    X = np.vstack([x, y]).T
+    return X, z.reshape(-1, 1)
+
