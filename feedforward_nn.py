@@ -44,7 +44,7 @@ class NeuralNetwork:
         biases = []
         for i in range(len(self.layers) - 1):
             #TODO: make zero?
-            biases.append(0*np.random.normal(0, 1, (1, self.layers[i+1])))
+            biases.append(np.zeros((1, self.layers[i+1])))
         return biases
 
     def _linear(self, z):
@@ -134,7 +134,8 @@ class NeuralNetwork:
         
     def concatenated_weights_and_biases(self):
         """reshapes the weights and biases into a single column vector."""
-        return np.concatenate([w.flatten() for w in self.weights] + [b.flatten() for b in self.biases])
+        wb = np.concatenate([w.flatten() for w in self.weights] + [b.flatten() for b in self.biases])
+        return wb.reshape(-1, 1)
 
     def wb(self):
         return self.concatenated_weights_and_biases()
@@ -203,74 +204,71 @@ class NeuralNetwork:
         return self.predict(X, wb) > 0.5
     
 def nn_example():
-    pass
+    
 
-from data_generation import generate_data_linear
+    from data_generation import generate_data_linear
 
-x, y, z, _ = generate_data_linear(3, 0, 22)
-X = np.vstack([x, y]).T
+    x, y, z, _ = generate_data_linear(3, 0, 22)
+    X = np.vstack([x, y]).T
 
-nn = NeuralNetwork([2, 2, 2, 1], "relu")
+    nn = NeuralNetwork([2, 2, 2, 1], "relu")
 
-from data_generation import generate_data_binary
-x, y, z = generate_data_binary(100, 75767)
-X = np.vstack([x, y]).T
+    from data_generation import generate_data_binary
+    x, y, z = generate_data_binary(100, 75767)
+    X = np.vstack([x, y]).T
 
-from gradient_descent import GradientDescent
-wb = nn.wb()
+    from gradient_descent import GradientDescent
+    wb = nn.wb()
 
-preds = nn.predict_binary(X, wb)
+    preds = nn.predict_binary(X, wb)
 
-cnt = 0
-for i in range(len(preds)):
-    if preds[i] == z[i]:
-        cnt += 1
-print(cnt / len(preds))
+    cnt = 0
+    for i in range(len(preds)):
+        if preds[i] == z[i]:
+            cnt += 1
+    print(cnt / len(preds))
 
-print(np.count_nonzero(preds))
+    print(np.count_nonzero(preds))
 
-#print(nn.predict(X, wb))
-gd = GradientDescent(batch_size=5, store_extra=True)
-wb = gd.train(X, wb, y, nn, 0.01, 1000)
+    #print(nn.predict(X, wb))
+    gd = GradientDescent(batch_size=5, store_extra=True)
+    wb = gd.train(X, wb, y, nn, 0.01, 1000)
 
-# Plot the cost function
-import matplotlib.pyplot as plt
-plt.plot(gd.costs)
-plt.show()
-
-#%%
-preds = nn.predict_binary(X, wb)
-
-cnt = 0
-for i in range(len(preds)):
-    if preds[i] == z[i]:
-        cnt += 1
-print(cnt / len(preds))
-
-print(np.count_nonzero(preds))
+    # Plot the cost function
+    import matplotlib.pyplot as plt
+    plt.plot(gd.costs)
+    plt.show()
 
 
+    preds = nn.predict_binary(X, wb)
 
-#%%
-# Test prediction
-X = np.array([[0, 1],
-              [1, 0],
-              [1, 1],
-              [0, 0]])
+    cnt = 0
+    for i in range(len(preds)):
+        if preds[i] == z[i]:
+            cnt += 1
+    print(cnt / len(preds))
 
-print(nn.predict(X, wb))
+    print(np.count_nonzero(preds))
+
+    # Test prediction
+    X = np.array([[0, 1],
+                [1, 0],
+                [1, 1],
+                [0, 0]])
+
+    print(nn.predict(X, wb))
 
 
 
 
-#%% 
-#plot x, y, z
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(x, y, z)
-plt.show()
+
+    #plot x, y, z
+    import matplotlib.pyplot as plt
+    from mpl_toolkits.mplot3d import Axes3D
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(x, y, z)
+    plt.show()
 
 
 
