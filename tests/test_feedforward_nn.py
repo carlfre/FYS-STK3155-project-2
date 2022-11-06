@@ -100,7 +100,7 @@ def test_gradient_3_layers():
     np.random.seed(90) # Set numpy rng seed
 
     layers = [2, 2, 1]
-    nn = NeuralNetwork(layers, "sigmoid")
+    nn = NeuralNetwork(layers, "sigmoid", regularization=0.1)
     wb = nn.wb()
     n = len(wb) # 6 in this case
 
@@ -129,7 +129,7 @@ def test_gradient_4_layers():
     np.random.seed(673) # Set numpy rng seed
 
     layers = [3, 4, 3, 1]
-    nn = NeuralNetwork(layers, "sigmoid")
+    nn = NeuralNetwork(layers, "sigmoid", regularization=0.05)
     wb = nn.wb()
     n = len(wb)
 

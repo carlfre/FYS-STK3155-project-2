@@ -3,7 +3,7 @@ import numpy as np
 
 class NeuralNetwork:
 
-    def __init__(self, layers, activation_function="sigmoid"):
+    def __init__(self, layers, activation_function="sigmoid", regularization=0):
         """Initialize a neural network with the given layers and activation function.
         Parameters
         ----------
@@ -35,7 +35,8 @@ class NeuralNetwork:
         self.input_activation_fn_derivative = self._linear_derivative
         self.final_activation_fn = self._sigmoid
         self.final_activation_fn_derivative = self._sigmoid_derivative
-        # TODO: set final activation function and derivative
+
+        self.regularization = regularization
     
     def _initialize_weights(self):
         weights = []
@@ -180,7 +181,14 @@ class NeuralNetwork:
         self.y = y
 
         activations, _ = self._forward_propagation()
-        return np.mean((activations[-1] - y) ** 2)
+        cost = np.mean((activations[-1] - y) ** 2)
+
+        # Add L2 regularization
+        if self.regularization > 0:
+            reg = self.regularization * np.mean(np.concatenate([w.flatten() ** 2 for w in weights]))
+            cost += reg
+
+        return cost
 
     def gradient(self, X, wb, y):
         weights, biases = self.unflatten_weights_and_biases(wb)
@@ -192,6 +200,13 @@ class NeuralNetwork:
 
         dW, db = self._back_propagation()
         grad = np.concatenate([dw.flatten() for dw in dW] + [db_.flatten() for db_ in db])
+
+        # Apply L2 regularization to weights (not biases)
+        if self.regularization > 0:
+            reg = self.regularization * 2 * np.concatenate([w.flatten() for w in weights])
+            reg /= len(reg)
+            grad[:len(reg)] += reg
+
         return grad.reshape(-1, 1)
 
     def predict(self, X, wb):
@@ -206,10 +221,6 @@ class NeuralNetwork:
 
     def predict_binary(self, X, wb):
         return self.predict(X, wb) > 0.5
-
-
-
-
 
     
 def nn_example_old():
@@ -280,7 +291,7 @@ def nn_example():
     from data_generation import generate_data_binary
     X, z = generate_data_binary(500, 787)
     
-    nn = NeuralNetwork([2, 4, 4, 4, 1], "relu")
+    nn = NeuralNetwork([2, 4, 4, 4, 1], "relu", regularization=0.001)
 
     from gradient_descent import GradientDescent
     wb = nn.wb()
