@@ -2,7 +2,7 @@
 import math
 
 import numpy as np
-from src.regression_cost_funcs import OLSCost, RidgeCost
+from regression_cost_funcs import OLSCost, RidgeCost
 from abc import ABC, abstractmethod
 
 
