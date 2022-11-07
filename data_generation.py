@@ -37,17 +37,16 @@ def generate_data_Franke(N, sigma2, seed):
     x = np.random.uniform(0, 1, N)
     y = np.random.uniform(0, 1, N)
 
-    true_z = franke_function(x, y)
+    z_true = franke_function(x, y)
     epsilon = np.random.normal(0, sigma2, (N)) # generates n samples epsilon ~ N(0, sigma2)
-    z = true_z + epsilon
+    z = z_true + epsilon
 
-    return x, y, z, true_z
+    return x, y, z, z_true
 
 def linear_function(x, y):
-    a1 = 1
-    a2 = 2
-    b = -1
-    return a1 * x + a2 * y + b
+    cx = 1
+    cy = 2
+    return cx * x + cy * y
 
 def generate_data_linear(N, sigma2, seed):
     """Generates N uniformly distributed points on [0,1] x [0,1]
@@ -58,11 +57,13 @@ def generate_data_linear(N, sigma2, seed):
     x = np.random.uniform(0, 1, N)
     y = np.random.uniform(0, 1, N)
 
-    true_z = linear_function(x, y)
+    z_true = linear_function(x, y)
     epsilon = np.random.normal(0, sigma2, (N)) # generates n samples epsilon ~ N(0, sigma2)
-    z = true_z + epsilon
+    z = z_true + epsilon
 
-    return x, y, z, true_z
+    X = np.vstack([x, y]).T
+
+    return X, z, z_true
 
 def generate_data_binary(N, seed=987):
     """Generates N variable z with values 0 or 1,

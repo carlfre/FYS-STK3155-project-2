@@ -1,7 +1,8 @@
-#%%
+from regression_cost_funcs import ModelCost
+
 import numpy as np
 
-class NeuralNetwork:
+class NeuralNetwork(ModelCost):
 
     def __init__(self, layers, activation="sigmoid", output_activation="sigmoid", regularization=0):
         """Initialize a neural network with the given layers and activation function.
@@ -182,6 +183,10 @@ class NeuralNetwork:
             start = end
         return weights, biases
 
+    def n_params(self, X=None):
+        """Returns the number of parameters in the network."""
+        return self.concatenated_weights_and_biases().size
+
     def cost(self, X, wb, y):
         weights, biases = self.unflatten_weights_and_biases(wb)
         y = y.reshape(-1, 1)
@@ -238,7 +243,7 @@ def nn_example():
     from data_generation import generate_data_binary
     X, z = generate_data_binary(500, 787)
     
-    nn = NeuralNetwork([2, 4, 4, 4, 1], "relu", regularization=0.001)
+    nn = NeuralNetwork([2, 4, 4, 4, 1], "relu", output_activation="sigmoid", regularization=0.000)
 
     from gradient_descent import GradientDescent
     wb = nn.wb()

@@ -91,6 +91,20 @@ class ModelCost(ABC):
         else:
             return w.reshape(-1, 1)
 
+    def n_params(self, X):
+        """Get the number of parameters in the model.
+        Parameters
+        ----------
+        X: np.ndarray
+            Design matrix
+        
+        Returns
+        -------
+        n_params: int
+            Number of parameters in the model
+        """
+        return X.shape[1]
+
 class OLSCost(ModelCost):
     """Ordinary least squares cost function."""
 
