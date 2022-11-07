@@ -43,10 +43,12 @@ def generate_data_Franke(N, sigma2, seed):
 
     return x, y, z, z_true
 
+
 def linear_function(x, y):
     cx = 1
     cy = 2
     return cx * x + cy * y
+
 
 def generate_data_linear(N, sigma2, seed):
     """Generates N uniformly distributed points on [0,1] x [0,1]
@@ -64,6 +66,7 @@ def generate_data_linear(N, sigma2, seed):
     X = np.vstack([x, y]).T
 
     return X, z, z_true
+
 
 def generate_data_binary(N, seed=987):
     """Generates N variable z with values 0 or 1,
@@ -93,11 +96,20 @@ def generate_data_binary(N, seed=987):
 
     return X, z
 
-def and_data(n):
+
+def generate_and_data():
     """Generates n points of the AND function"""
-    x = np.random.randint(0, 2, n)
-    y = np.random.randint(0, 2, n)
-    z = x & y
+    x = [1, 1, 0, 0]
+    y = np.array([1, 0, 1, 0])
+    z = np.array([1, 0, 0, 0])
     X = np.vstack([x, y]).T
     return X, z.reshape(-1, 1)
 
+
+def generate_xor_data():
+    """Generates n points of the XOR function"""
+    x = np.array([1, 1, 0, 0])
+    y = np.array([1, 0, 1, 0])
+    z = np.array([0, 1, 1, 0])
+    X = np.vstack([x, y]).T
+    return X, z.reshape(-1, 1)
