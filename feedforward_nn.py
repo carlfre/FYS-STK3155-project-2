@@ -3,38 +3,49 @@ import numpy as np
 
 class NeuralNetwork:
 
-    def __init__(self, layers, activation_function="sigmoid", regularization=0):
+    def __init__(self, layers, activation="sigmoid", output_activation="sigmoid", regularization=0):
         """Initialize a neural network with the given layers and activation function.
         Parameters
         ----------
         layers: list
             List of integers, where each integer represents the number of nodes in a layer.
-        
-        activation_function: str
+        activation: str
             Activation function to use for all layers except the input and final layers.
-    
+            Options are "sigmoid", "relu", "leaky_relu", and "linear".
+        output_activation: str
+            Activation function to use for the final layer.
+            Options are "sigmoid", "relu", "leaky_relu", and "linear".
+        regularization: float
+            L2 regularization parameter.
         """
-
         self.layers = layers
         self.weights = self._initialize_weights()
         self.biases = self._initialize_biases()
 
-        if activation_function == "sigmoid":
-            self.activation_fn = self._sigmoid
-            self.activation_fn_derivative = self._sigmoid_derivative
-        elif activation_function == "relu":
-            self.activation_fn = self._relu
-            self.activation_fn_derivative = self._relu_derivative
-        elif activation_function == "leaky_relu":
-            self.activation_fn = self._leaky_relu
-            self.activation_fn_derivative = self._leaky_relu_derivative
-        else:
-            raise ValueError("Activation function not recognized.")
+        # Activation functions
+        activation_dict = {
+            "sigmoid": self._sigmoid,
+            "relu": self._relu,
+            "leaky_relu": self._leaky_relu,
+            "linear": self._linear
+        }
+        activation_derivative_dict = {
+            "sigmoid": self._sigmoid_derivative,
+            "relu": self._relu_derivative,
+            "leaky_relu": self._leaky_relu_derivative,
+            "linear": self._linear_derivative
+        }
+        # Set input layer activation function to be linear.
+        self.input_activation_fn = activation_dict["linear"]
+        self.input_activation_fn_derivative = activation_derivative_dict["linear"]
 
-        self.input_activation_fn = self._linear
-        self.input_activation_fn_derivative = self._linear_derivative
-        self.final_activation_fn = self._sigmoid
-        self.final_activation_fn_derivative = self._sigmoid_derivative
+        # Set hidden layer activation function
+        self.activation_fn = activation_dict[activation]
+        self.activation_fn_derivative = activation_derivative_dict[activation]
+
+        # Set final layer activation function
+        self.final_activation_fn = activation_dict[output_activation]
+        self.final_activation_fn_derivative = activation_derivative_dict[output_activation]
 
         self.regularization = regularization
     
@@ -221,70 +232,6 @@ class NeuralNetwork:
 
     def predict_binary(self, X, wb):
         return self.predict(X, wb) > 0.5
-
-    
-def nn_example_old():
-    from data_generation import generate_data_linear
-
-    #x, y, z, _ = generate_data_linear(3, 0, 22)
-    #X = np.vstack([x, y]).T
-
-    nn = NeuralNetwork([2, 4, 4, 4, 1], "sigmoid")
-
-    from data_generation import generate_data_binary
-    X, z = generate_data_binary(1000, 75767)
-    
-
-    from gradient_descent import GradientDescent
-    wb = nn.wb()
-
-    preds = nn.predict_binary(X, wb)
-
-    cnt = 0
-    for i in range(len(preds)):
-        if preds[i] == z[i]:
-            cnt += 1
-    print(cnt / len(preds))
-
-    print(np.count_nonzero(preds))
-
-    #print(nn.predict(X, wb))
-    gd = GradientDescent(batch_size=5, store_extra=True)
-    wb = gd.train(X, wb, z, nn, 0.1, 1000)
-
-    # Plot the cost function
-    import matplotlib.pyplot as plt
-    plt.plot(gd.costs)
-    plt.show()
-
-
-    preds = nn.predict_binary(X, wb)
-
-    cnt = 0
-    for i in range(len(preds)):
-        if preds[i] == z[i]:
-            cnt += 1
-    print(cnt / len(preds))
-
-    print(np.count_nonzero(preds))
-
-    # Test prediction
-    X = np.array([[0.2, 0.8],
-                [0.8, 0.2],
-                [0.8, 0.8],
-                [0.2, 0.2]])
-
-    print(nn.predict(X, wb))
-
-    #plot x, y, z
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.mplot3d import Axes3D
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    x = X[:, 0]
-    y = X[:, 1]
-    ax.scatter(x, y, z)
-    plt.show()
 
 def nn_example():
 
