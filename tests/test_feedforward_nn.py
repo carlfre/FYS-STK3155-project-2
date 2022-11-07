@@ -1,6 +1,7 @@
 from feedforward_nn import NeuralNetwork
 
 import numpy as np
+import pytest
 
 
 def test_initialization():
@@ -94,43 +95,25 @@ def test_predict():
     y_pred = nn.predict(X, wb)
     assert y_pred.shape == (4, 1)
 
-def test_gradient_3_layers():
-    """Numericallly estimates the gradient, and compares it to the gradient calculated by backpropagation
-    """
-    np.random.seed(90) # Set numpy rng seed
 
-    layers = [2, 2, 1]
-    nn = NeuralNetwork(layers, "sigmoid", regularization=0.1)
-    wb = nn.wb()
-    n = len(wb) # 6 in this case
-
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([[1], [0]])
-
-    tol = 1e-4
-    eps = 1e-4
-    grad = nn.gradient(X, wb, y)
-    for i in range(n):
-        one_i = np.zeros((n, 1))
-        one_i[i] = 1
-        wb_plus = wb + one_i * eps
-        wb_minus = wb - one_i * eps
-
-        partial_i = (nn.cost(X, wb_plus, y) - nn.cost(X, wb_minus, y)) / (2 * eps)
-
-        # Verify that relative error is lower than tolerance
-        denom = partial_i if partial_i != 0 else 1
-        assert abs((partial_i - grad[i][0]) / denom) < tol
-
-
-def test_gradient_4_layers():
+@pytest.mark.parametrize("layers", [[3, 2, 1], [3, 2, 2, 1], [3, 2, 2, 2, 1]])
+@pytest.mark.parametrize("activation", ["sigmoid", "relu", "leaky_relu"])
+@pytest.mark.parametrize("regularization", [0, 0.1, 0.5])
+@pytest.mark.parametrize("output_activation", ["sigmoid", "relu", "leaky_relu"])
+def test_gradient(layers, activation, regularization, output_activation):
     """Numericallly estimates the gradient, and compares it to the gradient calculated by backpropagation
     """
     np.random.seed(673) # Set numpy rng seed
 
-    layers = [3, 4, 3, 1]
-    nn = NeuralNetwork(layers, "sigmoid", regularization=0.05)
-    wb = nn.wb()
+    nn = NeuralNetwork(
+        layers, 
+        activation=activation, 
+        output_activation=output_activation, 
+        regularization=regularization
+        )
+
+    # ReLU and leaky ReLU are not differentiable at 0. Therefore we ensure that the weights are not 0
+    wb = nn.wb() - 1 # Therefore we subtract 1 from the weights and biases
     n = len(wb)
 
     X = np.array([
