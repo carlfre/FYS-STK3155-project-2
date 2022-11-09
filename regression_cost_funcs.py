@@ -114,12 +114,12 @@ class OLSCost(ModelCost):
     def cost(self, X, w, y):
         """Evaluate the cost function."""
         w, y = self.preprocess(w, y)
-        return np.sum((X @ w - y) ** 2)
+        return np.mean((X @ w - y) ** 2)
 
     def gradient(self, X, w, y):
         """Evaluate the gradient of the cost function."""
         w, y = self.preprocess(w, y)
-        return 2 * X.T @ (X @ w - y) 
+        return 2 / y.size * X.T @ (X @ w - y) 
 
     def predict(self, X, w):
         """Predict target values from input data."""
@@ -135,12 +135,12 @@ class RidgeCost(ModelCost):
     def cost(self, X, w, y):
         """Evaluate the cost function."""
         w, y = self.preprocess(w, y)
-        return np.sum((X @ w - y) ** 2) + self.regularization * np.sum(w ** 2)
+        return np.mean((X @ w - y) ** 2) + self.regularization * np.sum(w ** 2)
 
     def gradient(self, X, w, y):
         """Evaluate the gradient of the cost function."""
         w, y = self.preprocess(w, y)
-        return 2 * X.T @ (X @ w - y) + 2 * self.regularization * w
+        return 2 / y.size * X.T @ (X @ w - y) + 2 * self.regularization * w
     
     def predict(self, X, w):
         """Predict target values from input data."""

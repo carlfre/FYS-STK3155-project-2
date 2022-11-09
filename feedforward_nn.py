@@ -197,7 +197,7 @@ class NeuralNetwork(ModelCost):
         self.y = y
 
         activations, _ = self._forward_propagation()
-        cost = np.sum((activations[-1] - y) ** 2)
+        cost = np.mean((activations[-1] - y) ** 2)
 
         # Add L2 regularization
         if self.regularization > 0:
@@ -215,7 +215,7 @@ class NeuralNetwork(ModelCost):
         self.y = y
 
         dW, db = self._back_propagation()
-        grad = np.concatenate([dw.flatten() for dw in dW] + [db_.flatten() for db_ in db])
+        grad = 1 / y.size * np.concatenate([dw.flatten() for dw in dW] + [db_.flatten() for db_ in db])
 
         # Apply L2 regularization to weights (not biases)
         if self.regularization > 0:
