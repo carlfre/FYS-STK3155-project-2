@@ -136,7 +136,7 @@ class NeuralNetwork(ModelCost):
 
         # initial delta (ie. dC/d(z_L))
         delta = (
-            2 / y.size 
+            2 
             * (activations[-1] - y) 
             * self.final_activation_fn_derivative(inputs[-1])
             )
@@ -197,11 +197,11 @@ class NeuralNetwork(ModelCost):
         self.y = y
 
         activations, _ = self._forward_propagation()
-        cost = np.mean((activations[-1] - y) ** 2)
+        cost = np.sum((activations[-1] - y) ** 2)
 
         # Add L2 regularization
         if self.regularization > 0:
-            reg = self.regularization * np.mean(np.concatenate([w.flatten() ** 2 for w in weights]))
+            reg = self.regularization * np.sum(np.concatenate([w.flatten() ** 2 for w in weights]))
             cost += reg
 
         return cost
@@ -220,7 +220,6 @@ class NeuralNetwork(ModelCost):
         # Apply L2 regularization to weights (not biases)
         if self.regularization > 0:
             reg = self.regularization * 2 * np.concatenate([w.flatten() for w in weights])
-            reg /= len(reg)
             grad[:len(reg)] += reg
 
         return grad.reshape(-1, 1)
