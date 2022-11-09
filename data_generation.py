@@ -68,7 +68,7 @@ def generate_data_linear(N, sigma2, seed):
     return X, z, z_true
 
 
-def generate_data_binary(N, seed=987):
+def generate_data_binary(N, seed=987, add_col_ones=False):
     """Generates N variable z with values 0 or 1,
     that is 1 if x > 0.5 and y > 0.5, else 0.
 
@@ -91,7 +91,10 @@ def generate_data_binary(N, seed=987):
         else:
             z[i] = 0
 
-    X = np.vstack([x, y]).T
+    if add_col_ones:
+        X = np.vstack([np.ones(N), x, y]).T
+    else:
+        X = np.vstack([x, y]).T
     z = z.reshape(-1, 1)
 
     return X, z
@@ -113,3 +116,13 @@ def generate_xor_data():
     z = np.array([0, 1, 1, 0])
     X = np.vstack([x, y]).T
     return X, z.reshape(-1, 1)
+
+
+def main():
+    N = 10
+    X, y = generate_data_binary(N, add_col_ones=True)
+    print(X)
+
+
+if __name__ == "__main__":
+    main()
