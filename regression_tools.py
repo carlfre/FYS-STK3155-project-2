@@ -25,6 +25,7 @@ def MSE_vec(y_data, y_model):
     return np.sum((y_data - y_model) ** 2, axis=1) / n
 
 
+
 def create_X_polynomial(x, y, n):
     """Computes the design matrix for a degree n polynomial in variables
     x and y."""
@@ -304,3 +305,4 @@ def CV_gridsearch(X, z, k_fold, lambda_range, model_name):
     # Return parameter lambda which minimize MSE
     lambda_optimal = lambda_range[np.argmin(lambda_test_MSE)]
     return lambda_optimal
+# %%
