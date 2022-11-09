@@ -98,7 +98,7 @@ def test_predict():
 
 @pytest.mark.parametrize("layers", [[3, 2, 1], [3, 2, 2, 1], [3, 2, 2, 2, 1]])
 @pytest.mark.parametrize("activation", ["sigmoid", "relu", "leaky_relu"])
-@pytest.mark.parametrize("regularization", [0, 0.1, 0.5])
+@pytest.mark.parametrize("regularization", [0, 0.01, 1, 20])
 @pytest.mark.parametrize("output_activation", ["sigmoid", "relu", "leaky_relu"])
 def test_gradient(layers, activation, regularization, output_activation):
     """Numericallly estimates the gradient, and compares it to the gradient calculated by backpropagation
@@ -127,8 +127,8 @@ def test_gradient(layers, activation, regularization, output_activation):
         [0]
         ])
 
-    tol = 1e-4
-    eps = 1e-4
+    tol = 1e-2
+    eps = 1e-2
     grad = nn.gradient(X, wb, y)
     for i in range(n):
         one_i = np.zeros((n, 1))
@@ -140,4 +140,4 @@ def test_gradient(layers, activation, regularization, output_activation):
 
         # Verify that relative error is lower than tolerance
         denom = partial_i if partial_i != 0 else 1
-        assert abs((partial_i - grad[i][0]) / denom) < tol 
+        assert abs((partial_i - grad[i][0]) / denom) < tol
