@@ -172,7 +172,7 @@ class LogisticCost(ModelCost):
     def predict(self, X, w):
         """Compute the probability of a positive class."""
         w = self.preprocess(w)
-        return 1 / (1 + np.exp(-X @ w))
+        return 0.5 * (1 + np.tanh( 0.5 * X @ w))
     
     def predict_class(self, X, w):
         """Predict target values from input data."""

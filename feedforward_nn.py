@@ -4,7 +4,14 @@ import numpy as np
 
 class NeuralNetwork(ModelCost):
 
-    def __init__(self, layers, activation="sigmoid", output_activation="sigmoid", regularization=0):
+    def __init__(
+        self, 
+        layers, 
+        activation="relu",
+        output_activation="linear",
+        cost_function = "mse",
+        regularization=0
+        ):
         """Initialize a neural network with the given layers and activation function.
         Parameters
         ----------
@@ -16,6 +23,9 @@ class NeuralNetwork(ModelCost):
         output_activation: str
             Activation function to use for the final layer.
             Options are "sigmoid", "relu", "leaky_relu", and "linear".
+        cost_fn: str
+            Cost function to use.
+            Options are "mse" and "cross_entropy".
         regularization: float
             L2 regularization parameter.
         """
@@ -47,6 +57,16 @@ class NeuralNetwork(ModelCost):
         # Set final layer activation function
         self.final_activation_fn = activation_dict[output_activation]
         self.final_activation_fn_derivative = activation_derivative_dict[output_activation]
+
+        # Set cost function and derivative
+        if cost_function == "mse":
+            self.cost_fn = self.mse
+            self.cost_fn_derivative = self.mse_derivative
+        elif cost_function == "cross_entropy":
+            self.cost_fn = self.cross_entropy
+            self.cost_fn_derivative = self.cross_entropy_derivative
+        else:
+            raise ValueError("Invalid cost function.")
 
         self.regularization = regularization
     
@@ -94,7 +114,22 @@ class NeuralNetwork(ModelCost):
             return self.final_activation_fn
         else:
             return self.activation_fn
-        
+    
+    def mse(self, y_pred, y_true):
+        """Mean squared error cost function."""
+        return np.mean((y_pred - y_true)**2)
+
+    def cross_entropy(self, y_pred, y_true):
+        """Cross entropy cost function."""
+        return -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
+
+    def mse_derivative(self, y_pred, y_true):
+        """Derivative of the mean squared error cost function."""
+        return 2 * (y_pred - y_true) / y_true.size
+
+    def cross_entropy_derivative(self, y_pred, y_true):
+        """Derivative of the cross entropy cost function."""
+        return (1 / y_pred.size) * (y_pred - y_true) / (y_pred * (1 - y_pred))
 
     def _forward_propagation(self):
         """Perform forward propagation to compute the activations and
@@ -135,11 +170,7 @@ class NeuralNetwork(ModelCost):
         db = [np.zeros(b.shape) for b in self.biases]
 
         # initial delta (ie. dC/d(z_L))
-        delta = (
-            2 
-            * (activations[-1] - y) 
-            * self.final_activation_fn_derivative(inputs[-1])
-            )
+        delta = self.cost_fn_derivative(activations[-1], y) * self.final_activation_fn_derivative(inputs[-1])
 
         for layer in range(len(self.layers) - 1, 0, -1):
             dW[layer - 1] = activations[layer - 1].T @ delta
@@ -197,7 +228,7 @@ class NeuralNetwork(ModelCost):
         self.y = y
 
         activations, _ = self._forward_propagation()
-        cost = np.mean((activations[-1] - y) ** 2)
+        cost = self.cost_fn(activations[-1], y)
 
         # Add L2 regularization
         if self.regularization > 0:
@@ -215,7 +246,7 @@ class NeuralNetwork(ModelCost):
         self.y = y
 
         dW, db = self._back_propagation()
-        grad = 1 / y.size * np.concatenate([dw.flatten() for dw in dW] + [db_.flatten() for db_ in db])
+        grad = np.concatenate([dw.flatten() for dw in dW] + [db_.flatten() for db_ in db])
 
         # Apply L2 regularization to weights (not biases)
         if self.regularization > 0:
@@ -234,7 +265,7 @@ class NeuralNetwork(ModelCost):
         activations, _ = self._forward_propagation()
         return activations[-1]
 
-    def predict_binary(self, X, wb):
+    def predict_class(self, X, wb):
         return self.predict(X, wb) > 0.5
 
 def nn_example():
@@ -242,7 +273,13 @@ def nn_example():
     from data_generation import generate_data_binary
     X, z = generate_data_binary(500, 787)
     
-    nn = NeuralNetwork([2, 4, 4, 4, 1], "relu", output_activation="sigmoid", regularization=0.000)
+    nn = NeuralNetwork(
+        [2, 4, 4, 4, 1], 
+        "relu", 
+        output_activation="sigmoid", 
+        cost_function="cross_entropy",
+        regularization=0.000
+        )
 
     from gradient_descent import GradientDescent
     wb = nn.wb()

@@ -1,4 +1,5 @@
 from feedforward_nn import NeuralNetwork
+from data_generation import generate_data_binary
 
 import numpy as np
 import pytest
@@ -55,7 +56,7 @@ def test_leaky_relu():
 
 def test_forward_propagation():
     X = np.array([[1, 2]])
-    nn = NeuralNetwork([2, 2, 2, 1], "sigmoid")
+    nn = NeuralNetwork([2, 2, 2, 1], "sigmoid", "sigmoid")
 
     nn.weights = [np.array([[1, 2], [3, 4]]) * 0.1, np.array([[5, 6], [7, 8]]) * 0.1, np.array([[9, 10]]).T * 0.1]
     nn.biases = [np.array([[1, 2]])* 0.1, np.array([[3, 4]]) * 0.1, np.array([[5]]) * 0.1]
@@ -76,7 +77,7 @@ def test_forward_propagation():
 
 def test_predict():
     X = np.array([[1, 2]])
-    nn = NeuralNetwork([2, 2, 2, 1], "sigmoid")
+    nn = NeuralNetwork([2, 2, 2, 1], "sigmoid", "sigmoid")
 
     nn.weights = [np.array([[1, 2], [3, 4]]) * 0.1, np.array([[5, 6], [7, 8]]) * 0.1, np.array([[9, 10]]).T * 0.1]
     nn.biases = [np.array([[1, 2]])* 0.1, np.array([[3, 4]]) * 0.1, np.array([[5]]) * 0.1]
@@ -141,3 +142,47 @@ def test_gradient(layers, activation, regularization, output_activation):
         # Verify that relative error is lower than tolerance
         denom = partial_i if partial_i != 0 else 1
         assert abs((partial_i - grad[i][0]) / denom) < tol
+
+@pytest.mark.parametrize("layers", [[2, 8, 1], [2, 2, 2, 1], [2, 2, 2, 2, 1]])
+@pytest.mark.parametrize("regularization", [0, 0.01, 1, 20])
+def test_gradient_cross_entropy(layers, regularization):
+    """Numericallly estimates the gradient, and compares it to the gradient calculated by backpropagation
+    """
+    seed = 222
+    N = 100
+    
+    X, z = generate_data_binary(N, seed=seed)
+
+
+    output_activation = "sigmoid"
+    activation = "sigmoid"
+
+    nn = NeuralNetwork(
+        layers, 
+        activation=activation, 
+        output_activation=output_activation, 
+        cost_function="cross_entropy",
+        regularization=regularization
+        )
+    
+    wb = nn.wb()
+    n = wb.size
+
+    tol = 1e-2
+    eps = 1e-2
+    grad = nn.gradient(X, wb, z)
+    
+    for i in range(n):
+        
+        one_i = np.zeros((n, 1))
+        one_i[i] = 1
+        wb_plus = wb + one_i * eps
+        wb_minus = wb - one_i * eps
+
+        partial_i = (nn.cost(X, wb_plus, z) - nn.cost(X, wb_minus, z)) / (2 * eps)
+
+        # Verify that relative error is lower than tolerance
+        denom = partial_i if partial_i != 0 else 1
+        print(partial_i, grad[i][0])
+        assert abs((partial_i - grad[i][0]) / denom) < tol
+        
