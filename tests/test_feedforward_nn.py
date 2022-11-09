@@ -64,7 +64,7 @@ def test_forward_propagation():
     activations, zs = nn._forward_propagation()
 
     atol = 1e-5
-    # Compare with hand-caluclated values
+    # Compare with hand-calculated values
     assert np.allclose(zs[0], X, atol=atol)
     assert np.allclose(activations[0], X, atol=atol)
     assert np.allclose(zs[1], np.array([[0.8, 1.2]]), atol=atol)
