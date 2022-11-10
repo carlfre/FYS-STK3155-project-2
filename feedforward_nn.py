@@ -121,7 +121,8 @@ class NeuralNetwork(ModelCost):
 
     def cross_entropy(self, y_pred, y_true):
         """Cross entropy cost function."""
-        return -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
+        eps = 1e-100 # To prevent log(0)
+        return -np.mean(y_true * np.log(y_pred + eps) + (1 - y_true) * np.log(1 - y_pred + eps))
 
     def mse_derivative(self, y_pred, y_true):
         """Derivative of the mean squared error cost function."""
@@ -129,7 +130,9 @@ class NeuralNetwork(ModelCost):
 
     def cross_entropy_derivative(self, y_pred, y_true):
         """Derivative of the cross entropy cost function."""
-        return (1 / y_pred.size) * (y_pred - y_true) / (y_pred * (1 - y_pred))
+        denom = (y_pred * (1 - y_pred))
+        denom[denom == 0] = 1e-100 # To prevent division by zero
+        return (1 / y_pred.size) * (y_pred - y_true) / denom
 
     def _forward_propagation(self):
         """Perform forward propagation to compute the activations and
@@ -284,7 +287,7 @@ def nn_example():
     from gradient_descent import GradientDescent
     wb = nn.wb()
 
-    preds = nn.predict_binary(X, wb)
+    preds = nn.predict_class(X, wb)
 
     cnt = 0
 

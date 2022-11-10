@@ -159,7 +159,8 @@ class LogisticCost(ModelCost):
         """Evaluate cross entropy cost."""
         w, y = self.preprocess(w, y)
         p = self.predict(X, w)
-        return - np.sum(y * np.log(p) + (1 - y) * np.log(1 - p)) + self.regularization * np.sum(w[1:] ** 2)
+        eps = 1e-100
+        return - np.sum(y * np.log(p + eps) + (1 - y) * np.log(1 - p + eps)) + self.regularization * np.sum(w[1:] ** 2)
     
     def gradient(self, X, w, y):
         """Evaluate the gradient of the cost function."""
