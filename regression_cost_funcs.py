@@ -114,12 +114,12 @@ class OLSCost(ModelCost):
     def cost(self, X, w, y):
         """Evaluate the cost function."""
         w, y = self.preprocess(w, y)
-        return np.sum((X @ w - y) ** 2)
+        return np.mean((X @ w - y) ** 2)
 
     def gradient(self, X, w, y):
         """Evaluate the gradient of the cost function."""
         w, y = self.preprocess(w, y)
-        return 2 * X.T @ (X @ w - y) 
+        return 2 / y.size * X.T @ (X @ w - y) 
 
     def predict(self, X, w):
         """Predict target values from input data."""
@@ -135,19 +135,19 @@ class RidgeCost(ModelCost):
     def cost(self, X, w, y):
         """Evaluate the cost function."""
         w, y = self.preprocess(w, y)
-        return np.sum((X @ w - y) ** 2) + self.regularization * np.sum(w ** 2)
+        return np.mean((X @ w - y) ** 2) + self.regularization * np.sum(w ** 2)
 
     def gradient(self, X, w, y):
         """Evaluate the gradient of the cost function."""
         w, y = self.preprocess(w, y)
-        return 2 * X.T @ (X @ w - y) + 2 * self.regularization * w
+        return 2 / y.size * X.T @ (X @ w - y) + 2 * self.regularization * w
     
     def predict(self, X, w):
         """Predict target values from input data."""
         w = self.preprocess(w)
         return X @ w
 
-# TODO: check expressions for logistic cost, gradient, and predict
+
 class LogisticCost(ModelCost):
     """Logistic regression cost function."""
     
@@ -156,31 +156,28 @@ class LogisticCost(ModelCost):
         self.regularization = regularization
     
     def cost(self, X, w, y):
-        """Evaluate the cost function."""
+        """Evaluate cross entropy cost."""
         w, y = self.preprocess(w, y)
-        return np.sum(np.log(1 + np.exp(-y * (X @ w)))) + self.regularization * np.sum(w ** 2)
+        p = self.predict(X, w)
+        return - np.sum(y * np.log(p) + (1 - y) * np.log(1 - p)) + self.regularization * np.sum(w[1:] ** 2)
     
     def gradient(self, X, w, y):
         """Evaluate the gradient of the cost function."""
-        """
-        dcdb0 = np.zeros(1)
-        dcdb1 = np.zeros(1)
-        for i in range(len(y)):
-            dcdb0[0] += (y[i] - np.exp(X[i]@w)/(1+np.exp(X[i]@w)))[0]
-            dcdb1[0] += (y[i]*X[i] - X[i]*np.exp(X[i]@w)/(1+np.exp(X[i]@w)))[0]
-        return np.array([dcdb0, dcdb1])
-        """
-        return X.T @  ((X @ w) - y) + 2 * self.regularization * np.mean(w)
+        w, y = self.preprocess(w, y)
+        p = self.predict(X, w)
+        reg = 2 * self.regularization * w
+        reg[0] = 0
+        return - X.T @ (y - p) + reg
         
     def predict(self, X, w):
         """Compute the probability of a positive class."""
         w = self.preprocess(w)
-        return 1 / (1 + np.exp(-X @ w))
+        return 0.5 * (1 + np.tanh( 0.5 * X @ w))
     
     def predict_class(self, X, w):
         """Predict target values from input data."""
         w = self.preprocess(w)
-        return (1 / (1 + np.exp(-X @ w)) > 0.5).astype(int).flatten()
+        return (1 / (1 + np.exp(-X @ w)) > 0.5).astype(int)
 
 def cost_ols_example():
     """Example of how to use the cost function wrapper."""

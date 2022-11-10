@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from regression_cost_funcs import OLSCost, RidgeCost, LogisticCost
+from data_generation import generate_data_binary
 
 @pytest.mark.parametrize("w", 
 [
@@ -78,14 +79,11 @@ def test_ridge_gradient(w, regularization):
 @pytest.mark.parametrize("regularization", [0, 0.001, 0.1, 0.5])
 def test_logistic_gradient(w, regularization):
     """Numerically verify gradient of OLS cost function."""
-    np.random.seed(67)
+    seed = 89
 
     
     logistic = LogisticCost(regularization)
-    X = np.random.randn(100, 2)
-    y = 2 * X[:, 0] + 3 * X[:, 1]
-
-    y = y.reshape(-1, 1)
+    X, y = generate_data_binary(100, seed)
 
     # Compute gradient
     grad = logistic.gradient(X, w, y)
