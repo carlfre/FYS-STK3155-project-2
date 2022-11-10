@@ -133,9 +133,10 @@ class GradientDescent:
 
     def adagrad(self):
         if not hasattr(self, "G"):
-            self.G = np.zeros(( len(self.w), 1))
+            self.G = np.zeros((len(self.w), 1))
+        epsi = 1e-8
         self.G += self.model.gradient(self.X_batch, self.w, self.y_batch)**2
-        return self.eta / np.sqrt(self.G)
+        return self.eta / np.sqrt(self.G + epsi)
     
     def rmsprop(self):
         beta = 0.9
